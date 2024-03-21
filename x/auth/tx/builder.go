@@ -275,6 +275,19 @@ func (w *wrapper) SetMsgs(msgs ...sdk.Msg) error {
 	return nil
 }
 
+func (w *wrapper) SetAnyMsgs(anys ...*codectypes.Any) error {
+	w.tx.Body.Messages = anys
+
+	// set bodyBz to nil because the cached bodyBz no longer matches tx.Body
+	w.bodyBz = nil
+
+	// reset signers and msgsV2
+	w.signers = nil
+	w.msgsV2 = nil
+
+	return nil
+}
+
 // SetTimeoutHeight sets the transaction's height timeout.
 func (w *wrapper) SetTimeoutHeight(height uint64) {
 	w.tx.Body.TimeoutHeight = height
