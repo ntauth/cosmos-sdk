@@ -77,6 +77,7 @@ type builder struct {
 	codec        codec.BinaryCodec
 
 	msgs          []sdk.Msg
+	anyMsgs       *[]*codectypes.Any
 	timeoutHeight uint64
 	granter       []byte
 	payer         []byte
@@ -104,7 +105,15 @@ var marshalOption = proto.MarshalOptions{
 }
 
 func (w *builder) getTx() (*gogoTxWrapper, error) {
-	anyMsgs, err := msgsV1toAnyV2(w.msgs)
+	var (
+		anyMsgs []*anypb.Any
+		err     error
+	)
+	if w.anyMsgs != nil {
+		anyMsgs, err = anyMsgsV1toAnyV2(*w.anyMsgs)
+	} else {
+		anyMsgs, err = msgsV1toAnyV2(w.msgs)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -167,6 +176,10 @@ func msgsV1toAnyV2(msgs []sdk.Msg) ([]*anypb.Any, error) {
 	return intoAnyV2(anys), nil
 }
 
+func anyMsgsV1toAnyV2(msgs []*codectypes.Any) ([]*anypb.Any, error) {
+	return intoAnyV2(msgs), nil
+}
+
 func intoV2Fees(fees sdk.Coins) []*basev1beta1.Coin {
 	coins := make([]*basev1beta1.Coin, len(fees))
 	for i, c := range fees {
@@ -180,6 +193,11 @@ func intoV2Fees(fees sdk.Coins) []*basev1beta1.Coin {
 
 func (w *builder) SetMsgs(msgs ...sdk.Msg) error {
 	w.msgs = msgs
+	return nil
+}
+
+func (w *builder) SetAnyMsgs(msgs ...*codectypes.Any) error {
+	w.anyMsgs = &msgs
 	return nil
 }
 
